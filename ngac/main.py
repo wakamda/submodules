@@ -3,7 +3,7 @@ import re
 import json
 from urllib import parse
 import sys
-
+import os
 # url
 url = 'http://ngac.org.cn/ngcs/dataPage'
 
@@ -19,7 +19,7 @@ data = {
 }
 ################################################## 修改此处 ######################################################
 # s:搜索关键字，在''内修改
-s = '塔里木'
+s = '鄂尔多斯'
 # p:显示的数量
 p = 10
 # p:查找第几页
@@ -33,9 +33,9 @@ data["pageNum"] = n
 responce = requests.post(url, data=data, headers=header)
 
 # 调试用
-print(responce.request.headers)
-print("\n")
-print(responce.request.body)
+#print(responce.request.headers)
+#print("\n")
+#print(responce.request.body)
 
 # 判断请求是否成功
 if responce.ok <= 0:
@@ -50,6 +50,8 @@ pagesize = responce.json()["pageSize"]
 with open("text.txt","w") as file:
     file.write(
     "剖面名称                  矿区名称                 剖面测量单位                                地质剖面图                   比例尺    起点经度    起点纬度    终点经度    终点纬度    地质剖面   \n")
+# 创建目录文件夹
+os.makedirs('./img/', exist_ok=True)
 
 i=0
 while (i < pagesize) :
@@ -80,25 +82,40 @@ while (i < pagesize) :
     print(each_result_list["personnel"])
     print(each_result_list["area"])
     
+    # 下载图片
+    # 判断图片是否存在
+    if len(each_result_list["fileName"]) == 0:
+        print("没有图片")
+        file_name = '无'
+    else:
+        headers={
 
-
+        }
+        url_img = 'http://www.ngac.org.cn/ngcsd/'+each_result_list["fileName"]
+        responce_img = requests.get(url_img)
+        with open('./img/1.png','wb') as file:
+            file.write(responce_img.content) #写入二进制内容
+        file_name = './img/'+each_result_list["sectionName"]+'.png'
+        os.rename('./img/1.png',file_name)
 
     # 写入文件
     with open('text.txt', mode='a') as file:
         file.write(
-        each_result_list["sectionName"]      +"  "+
+        each_result_list["sectionName"]         +"  "+
         each_result_list["miningAreaName"]      +"  "+
-        each_result_list["company"]      +"  "+"http://www.ngac.org.cn/ngcsd/"+
-        each_result_list["fileName"]      +"  "+
-        each_result_list["scale"]      +"  "+
-        each_result_list["startingLongitude"]      +"  "+
-        each_result_list["startingLatitude"]      +"  "+
-        each_result_list["destinationLongitude"]      +"  "+
-        each_result_list["destinationLatitude"]      +"  "+
-        each_result_list["geologicalSection"]      +"  "+
-        each_result_list["guid"]      +"  "+
-        each_result_list["personnel"]      +"  "+
-        each_result_list["area"]      +"\n"
+        each_result_list["company"]             +"  "+
+
+        file_name                               +"  "+
+
+        each_result_list["scale"]               +"  "+
+        each_result_list["startingLongitude"]   +"  "+
+        each_result_list["startingLatitude"]    +"  "+
+        each_result_list["destinationLongitude"]+"  "+
+        each_result_list["destinationLatitude"] +"  "+
+        each_result_list["geologicalSection"]   +"  "+
+        each_result_list["guid"]                +"  "+
+        each_result_list["personnel"]           +"  "+
+        each_result_list["area"]                +"\n"
         )
     print("\n-------------------------\n")
     i = i+1
